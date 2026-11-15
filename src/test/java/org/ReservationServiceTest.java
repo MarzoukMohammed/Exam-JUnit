@@ -37,6 +37,7 @@ class ReservationServiceTest {
         reservationService = new ReservationService(dataRepo);
     }
 
+    // RG01 ===============================================================================
     @Test
     void RG01_dateDebutVide() {
         Etudiant etudiant = dataRepo.getEtudiants().getFirst();
@@ -60,6 +61,8 @@ class ReservationServiceTest {
                 () -> reservationService.reserverProduit(etudiant.getId(), produit.getId(), DATE, null)
         );
     }
+
+    // RG02 ===============================================================================
 
     @Test
     @DisplayName("Test date debut anterieur a date courant")
@@ -101,6 +104,8 @@ class ReservationServiceTest {
         );
     }
 
+    // RG03 ===============================================================================
+
     @Test
     @DisplayName("Test date debut egual a date fin")
     void RG03_dateDebutEgualAFin(){
@@ -127,6 +132,7 @@ class ReservationServiceTest {
                 () -> reservationService.reserverProduit(etudiant.getId(), produit.getId(), DATE_DEBUT, DATE_FIN)
         );
     }
+    // RG04 ===============================================================================
 
     @Test
     @DisplayName("Test calcule duree (date debut = date fin)")
@@ -151,6 +157,7 @@ class ReservationServiceTest {
         Commande cmd = reservationService.reserverProduit(etudiant.getId(), produit.getId(), DATE_DEBUT, DATE_FIN);
         Assertions.assertEquals(2, cmd.getDuree());
     }
+    // RG05 ===============================================================================
 
 
     @Test
@@ -180,6 +187,7 @@ class ReservationServiceTest {
                 () -> reservationService.reserverProduit(etudiant.getId(), FAUX_ID_PROD, DATE_DEBUT, DATE_FIN)
         );
     }
+    // RG06 ===============================================================================
 
 
     @Test
@@ -209,6 +217,7 @@ class ReservationServiceTest {
                 () -> reservationService.reserverProduit(etudiant.getId(), produit.getId(), DATE_DEBUT, DATE_FIN)
         );
     }
+    // RG07 ===============================================================================
 
     @Test
     @DisplayName("RG07 : etudiant avec 1 cmd ancienne et 1 cmd a venir peut reserver")
@@ -251,12 +260,13 @@ class ReservationServiceTest {
                 IllegalArgumentException.class,
                 () -> reservationService.reserverProduit(etudiant.getId(), produit3.getId(), DATE_DEBUT, DATE_FIN));
     }
+    // RG08 ===============================================================================
 
     @Test
     @DisplayName("RG08 : produit indisponible !")
     void RG08_produitIndisponible(){
         Etudiant etudiant = dataRepo.getEtudiants().getFirst();
-        Produit produit = dataRepo.getProduits().get(0);
+        Produit produit = dataRepo.getProduits().getFirst();
 
         final LocalDate DATE_DEBUT = LocalDate.now().plusDays(3);
         final LocalDate DATE_FIN = DATE_DEBUT.plusDays(4); // 5 days reservation from 3 to 7
@@ -292,6 +302,7 @@ class ReservationServiceTest {
         );
     }
 
+    // RG09 ===============================================================================
     @Test
     void RG09_produitTarifJournalierNegative(){
         Assertions.assertThrows(
@@ -356,6 +367,7 @@ class ReservationServiceTest {
         );
     }
 
+    // RG10 ===============================================================================
 
 
     @Test
@@ -376,6 +388,7 @@ class ReservationServiceTest {
         );
     }
 
+    // RG11 ===============================================================================
     @Test
     void RG11_calculeMontantTotal(){
         Etudiant etudiant = dataRepo.getEtudiants().getFirst();
@@ -398,6 +411,7 @@ class ReservationServiceTest {
         );
     }
 
+    // RG12 ===============================================================================
     @Test
     @DisplayName("RG12 : montant location arrondi HALF_UP a 2 decimales")
     void RG12_arrondiHalfUp() {
@@ -427,6 +441,7 @@ class ReservationServiceTest {
                 cmd.getMontantTotal()
         );
     }
+    // RG13 ===============================================================================
 
     @Test
     @DisplayName("RG13 : chaque commande a une reference unique")
@@ -454,6 +469,7 @@ class ReservationServiceTest {
         );
     }
 
+    // RG14 ===============================================================================
 
     @Test
     @DisplayName("RG14 : une erreur de validation n'enregistre aucune commande")
@@ -485,6 +501,38 @@ class ReservationServiceTest {
         );
         Assertions.assertTrue(
                 dataRepo.commandesDeProduit(produit2.getId()).isEmpty()
+        );
+    }
+
+    // extra pour 100 coverage ===============================================================================
+
+    @Test
+    void produit100Coverage(){
+        Assertions.assertThrows(
+                IllegalArgumentException.class,
+                () -> new Produit("prod", null, null)
+        );
+        Assertions.assertThrows(
+                IllegalArgumentException.class,
+                () -> new Produit("prod", new BigDecimal(5), null)
+        );
+    }
+
+    @Test
+    void RG08_periodeAvantCommandeExistante() {
+        Etudiant etudiant = dataRepo.getEtudiants().getFirst();
+        Produit produit = dataRepo.getProduits().getFirst();
+
+        final LocalDate DEBUT_EXISTANTE = LocalDate.now().plusDays(5);
+        final LocalDate FIN_EXISTANTE = DEBUT_EXISTANTE.plusDays(2);      // existing: days 5 to 7
+
+        reservationService.reserverProduit(etudiant.getId(), produit.getId(), DEBUT_EXISTANTE, FIN_EXISTANTE);
+
+        final LocalDate DEBUT_NOUVELLE = LocalDate.now();
+        final LocalDate FIN_NOUVELLE = DEBUT_NOUVELLE.plusDays(2);        // new: days 0 to 2, ends before day 5
+
+        Assertions.assertDoesNotThrow(
+                () -> reservationService.reserverProduit(etudiant.getId(), produit.getId(), DEBUT_NOUVELLE, FIN_NOUVELLE)
         );
     }
 }
